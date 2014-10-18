@@ -1,0 +1,41 @@
+<pre id="log" style="width: 100%; height: 300px;"></pre>
+<canvas id="mirror"></canvas>
+<script src="http://localhost:3000/socket.io/socket.io.js"></script>
+<script>
+var log = document.getElementById('log');
+var mirror = document.getElementById('mirror');
+mirror.width = log.clientWidth;
+mirror.height = log.clientHeight;
+var ctx = mirror.getContext("2d");
+var logged = false;
+var url = 'http://localhost:3000';//document.location.origin;
+var socket = io.connect(url);
+socket.on('connect', function(data){
+  if (logged)
+    return;
+  logged = true;
+  log.addEventListener('mousemove', function(event){
+    //console.log(event);
+    socket.emit('log', {'x': event.offsetX, 'y': event.offsetY});
+  });
+});
+socket.on('mirror', function (data) {
+  //console.log(data);
+  if (data.length < 2) return;
+  ctx.beginPath();
+  ctx.moveTo(data[0]['x'], data[0]['y']);
+  data.forEach(function(row){
+    ctx.lineTo(row['x'], row['y']);
+  });
+  ctx.stroke();
+});
+socket.on('log', function (data) {
+  console.log(data);
+});
+
+function controlClear()
+{
+  socket.emit('control', {'clear': true});
+}
+</script>
+<a href="#" onclick="controlClear(); return false;">control: clear</a>
